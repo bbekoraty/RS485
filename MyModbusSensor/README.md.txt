@@ -26,9 +26,15 @@ SERIAL_6O2
 SERIAL_7O2
 SERIAL_8O2*/
 
-
 //MyModbusSensor objectname(dir pin,rxPin,txPin,slaveID,Buadrate)
-MyModbusSensor conductivity(4, 16, 17, 1, 9600);
+MyModbusSensor Digital_conductivity(4, 16, 17, 1, 9600);
+MyModbusSensor Analog_conductivity(4, 16, 17, 1, 9600);
+MyModbusSensor Analog_pH(4, 16, 17, 1, 9600);
+
+/*coden >> 0 conduct_digi
+           1 conduct
+           2 pH
+*/
 
 void setup()
 {
@@ -38,10 +44,52 @@ void setup()
 
 void loop()
 {
-  conductivity.readSensorValues(0, 2); //objectname.readsensor(startbit,quantity)
-  conductivity.readSensorValues(2, 2); //objectname.readsensor(startbit,quantity)
-  conductivity.displayConductivity(); //Display
-  conductivity.displayTemperature();
-  Serial.println("/////END VALUE/////");
+  /////////////////////Read and display function ///////////////////////////////////
+                     // Digital probe conductivity//
+  Digital_conductivity.readSensorValues(0, 2, 4, 0); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Digital_conductivity.displayConductivity(); //Display conductivity
+  Digital_conductivity.readSensorValues(0, 2, 4, 0); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Digital_conductivity.displayTemperature();//Display Temperature
+
+                     // Anolog probe conductivity//
+  Analog_conductivity.readSensorValues(0, 2, 3, 1); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Analog_conductivity.displayConductivity(); //Display conductivity
+  Analog_conductivity.readSensorValues(0, 2, 3, 1); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Analog_conductivity.displayTemperature();//Display Temperature
+
+                    // Analog probe pH//
+  Analog_pH.readSensorValues(0, 2, 3, 2); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Analog_pH.displayConductivity(); //Display conductivity
+  Analog_pH.readSensorValues(0, 2, 3, 2); //objectname.readsensor(startbit,quantity,readMode(3,4),coden(0,1,2))
+  Analog_pH.displayTemperature();//Display Temperature
+  
+/////////////////////Read and display function END /////////////////////////////////
+
+//////////////////////getter function /////////////////////////////////////
+    // get slaveID//
+ //object name.getSlaveID
+  int slaveID = conductivity.getSlaveID();
+
+  // get conductivity as variable//
+ //object name.getConductivityValue()
+ float conductivityValue = conductivity.getConductivityValue(); 
+  Serial.print("Conductivity Value: ");
+  Serial.println(conductivityValue, 6);
+
+
+    // get temperature as variable//
+ //object name.getTemperatureValue()
+ float conductivityValue = conductivity.getTemperatureValue(); 
+  Serial.print("Conductivity Value: ");
+  Serial.println(conductivityValue, 6);
+
+      // get pH as variable//
+ //object name.getpHValue()
+ float pHValue = Analog_pH.getpHValue(); 
+  Serial.print("pH Value: ");
+  Serial.println(pH, 3);
+  
+//////////////////////getter function END /////////////////////////////////////
+
   delay(1000);
 }

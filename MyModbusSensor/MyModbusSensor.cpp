@@ -4,6 +4,7 @@ ModbusMaster MyModbusSensor::_node;
 uint8_t MyModbusSensor::_dirPin;
 uint8_t MyModbusSensor::_staticDirPin = 0;
 
+//constructure
 MyModbusSensor::MyModbusSensor(uint8_t dirPin, uint8_t rxPin, uint8_t txPin, uint8_t slaveID, unsigned long baudRate)
 {
   _dirPin = dirPin;
@@ -16,7 +17,7 @@ MyModbusSensor::MyModbusSensor(uint8_t dirPin, uint8_t rxPin, uint8_t txPin, uin
 
 void MyModbusSensor::setDirPin(uint8_t dirPin)
 {
-  _staticDirPin = dirPin;
+  _staticDirPin = dirPin;                                                                                                                                                                                       
 }
 
 void MyModbusSensor::staticModbusPostTransmission()
@@ -47,13 +48,17 @@ void MyModbusSensor::initial(SerialConfig mySerialConfig)
   _node.preTransmission(staticModbusPreTransmission);
 }
 
-void MyModbusSensor::readSensorValues(uint8_t startAddress, uint8_t numRegisters)
+
+void MyModbusSensor::readSensorValues(uint8_t startAddress, uint8_t numRegisters ,uint8_t mode,uint8_t coden)
 {
   uint8_t result;
+  
+  //------------------DIGITAL PROBE CONDUCTIVITY VALUE------------------//
 
-  if (startAddress == 0)
+  if (startAddress == 0&&numRegisters == 2&&mode == 4&&coden==0)//Conductivity Address (Digital Probe)
   {
-    result = _node.readInputRegisters(0, numRegisters);
+    Serial.println("In CD digi");
+    result = _node.readInputRegisters(startAddress, numRegisters);
     if (result == _node.ku8MBSuccess)
     {
       uint32_t sensorValue = 0;
@@ -69,9 +74,14 @@ void MyModbusSensor::readSensorValues(uint8_t startAddress, uint8_t numRegisters
       Serial.println(result, HEX);
     }
   }
-  else if (startAddress == 2)
+
+   //******************* END *******************//
+   //------------------DIGITAL PROBE TEMP VALUE------------------//
+
+  else if (startAddress == 2&&numRegisters == 2&&mode == 4&&coden==0)//Temperature Address
   {
-    result = _node.readInputRegisters(2, numRegisters);
+    Serial.println("In CD digi");
+    result = _node.readInputRegisters(startAddress, numRegisters);
     if (result == _node.ku8MBSuccess)
     {
       uint32_t sensorValue = 0;
@@ -87,22 +97,109 @@ void MyModbusSensor::readSensorValues(uint8_t startAddress, uint8_t numRegisters
       Serial.println(result, HEX);
     }
   }
-  else
+   //******************* END *******************//
+   //------------------ANALOG PROBE CONDUCTIVITY VALUE------------------//
+  else if (startAddress == 0&&numRegisters == 2&&mode == 3&&coden==1)//Conductivity Address (Analog Probe)
   {
-    Serial.println("Invalid start address.");
+    Serial.println("In CD ");
+    result = _node.readHoldingRegisters(startAddress, numRegisters);
+    if (result == _node.ku8MBSuccess)
+    {
+      uint32_t sensorValue = 0;
+      for (int i = 0; i < numRegisters; i++)
+      {
+        sensorValue |= _node.getResponseBuffer(i) << (i * 16);
+      }
+      _conductivityValue = *(float *)&sensorValue;
+    }
+    else
+    {
+      Serial.print("Error reading Conductivity registers! Error code: ");
+      Serial.println(result, HEX);
+    }
   }
+     //******************* END *******************//
+   //------------------ANALOG PROBE TEMP VALUE------------------//
+    else if (startAddress == 2&&numRegisters == 2&&mode == 3&&coden==1)//Temperature Address (Analog Probe)
+  {
+    Serial.println("In CD ");
+    result = _node.readHoldingRegisters(startAddress, numRegisters);
+    if (result == _node.ku8MBSuccess)
+    {
+      uint32_t sensorValue = 0;
+      for (int i = 0; i < numRegisters; i++)
+      {
+        sensorValue |= _node.getResponseBuffer(i) << (i * 16);
+      }
+      _temperatureValue = *(float *)&sensorValue;
+    }
+    else
+    {
+      Serial.print("Error reading Temperature registers! Error code: ");
+      Serial.println(result, HEX);
+    }
+  }
+  //******************* END *******************//
+  //------------------pH VALUE------------------//
+    else if (startAddress == 0&&numRegisters == 2&&mode == 3&&coden==2)
+  {
+    Serial.println("In pH");
+    result = _node.readHoldingRegisters(startAddress, numRegisters);
+    if (result == _node.ku8MBSuccess)
+    {
+      uint32_t sensorValue = 0;
+      for (int i = 0; i < numRegisters; i++)
+      {
+        sensorValue |= _node.getResponseBuffer(i) << (i * 16);
+      }
+      _pHValue = *(float *)&sensorValue;
+    }
+    else
+    {
+      Serial.print("Error reading pH registers! Error code: ");
+      Serial.println(result, HEX);
+    }
+  }
+  //******************* END *******************//
+  //------------------pH Temp VALUE------------------//
+    else if (startAddress == 2&&numRegisters == 2&&mode == 3&&coden==2)//Temperature Address (Analog Probe)
+  {
+    Serial.println("In pH");
+    result = _node.readHoldingRegisters(startAddress, numRegisters);
+    if (result == _node.ku8MBSuccess)
+    {
+      uint32_t sensorValue = 0;
+      for (int i = 0; i < numRegisters; i++)
+      {
+        sensorValue |= _node.getResponseBuffer(i) << (i * 16);
+      }
+      _temperatureValue = *(float *)&sensorValue;
+    }
+    else
+    {
+      Serial.print("Error reading Temperature registers! Error code: ");
+      Serial.println(result, HEX);
+    }
+  }
+  //******************* END *******************//
 }
 
+//*********************Display Part******************//
 void MyModbusSensor::displayConductivity()
 {
   Serial.println("---CONDUCTIVITY--- ");
   Serial.print(_conductivityValue, 6);
   Serial.println(" ms/cm");
 }
-
 void MyModbusSensor::displayTemperature()
 {
   Serial.println("---TEMPERATURE--- ");
   Serial.print(_temperatureValue, 6);
   Serial.println(" C");
+}
+void MyModbusSensor::displaypH()
+{
+  Serial.println("---pH--- ");
+  Serial.print(_pHValue, 6);
+  Serial.println(" ");
 }
